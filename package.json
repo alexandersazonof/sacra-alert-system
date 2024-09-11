@@ -6,7 +6,7 @@
   "license": "MIT",
   "scripts": {
     "build": "tsc",
-    "dev": "ts-node src/main.ts",
+    "dev": "yarn build && ts-node src/main.ts",
     "start": "yarn build && node dist/main.js",
     "typeorm": "ts-node ./node_modules/typeorm/cli.js",
     "migration:generate": "yarn typeorm migration:generate -d src/data-source.ts",
