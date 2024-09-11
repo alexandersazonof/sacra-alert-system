@@ -1,22 +1,14 @@
 import { ApplicationStateEntity } from '../entity/application-state.entity';
-import { DataSource, Repository } from 'typeorm';
+import { AppDataSource } from '../data-source';
 
-export class ApplicationStateService {
-
-  private applicationStateRepository: Repository<ApplicationStateEntity>;
-
-  constructor(dataSources: DataSource) {
-    this.applicationStateRepository = dataSources.getRepository(ApplicationStateEntity);
+async function initDataSource() {
+  if (!AppDataSource.isInitialized) {
+    await AppDataSource.initialize();
   }
+}
 
-  async create(applicationName: string, status: string): Promise<ApplicationStateEntity> {
-    const applicationState = new ApplicationStateEntity();
-    applicationState.applicationName = applicationName;
-    applicationState.status = status;
-    return this.applicationStateRepository.save(applicationState);
-  }
-
-  async findAll(): Promise<ApplicationStateEntity[]> {
-    return this.applicationStateRepository.find();
-  }
+export async function saveApplicationState(applicationState: ApplicationStateEntity): Promise<ApplicationStateEntity> {
+  await initDataSource();
+  const applicationStateRepository = AppDataSource.getRepository(ApplicationStateEntity);
+  return await applicationStateRepository.save(applicationState);
 }

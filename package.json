@@ -8,9 +8,10 @@
     "build": "tsc",
     "dev": "ts-node src/main.ts",
     "start": "yarn build && node dist/main.js",
-    "migration:generate": "typeorm migration:generate TBD",
-    "migration:run": "typeorm migration:run",
-    "migration:revert": "yarn typeorm migration:revert"
+    "typeorm": "ts-node ./node_modules/typeorm/cli.js",
+    "migration:generate": "yarn typeorm migration:generate -d src/data-source.ts",
+    "migration:run": "yarn typeorm migration:run -d src/data-source.ts",
+    "migration:revert": "yarn typeorm migration:revert -d src/data-source.ts"
   },
   "devDependencies": {
     "@types/node": "^22.5.4",

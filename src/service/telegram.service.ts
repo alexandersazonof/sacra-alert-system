@@ -1,7 +1,14 @@
 import axios from 'axios';
 import logger from '../logger';
 
-export async function createMessageAndSend(rpcRecord: Record<string, boolean>, subgraphRecord: Record<string, boolean>) {
+const DELAY_THRESHOLD = 1000;
+
+export async function createMessageAndSend(
+  rpcRecord: Record<string, boolean>,
+  subgraphRecord: Record<string, boolean>,
+  subgraphDelayRecord: Record<string, number>,
+  proxySubgraphRecord: Record<string, number>
+  ) {
     let shouldPing = false;
     let message = `🔧 *RPC Status*\n`;
     for (const key in rpcRecord) {
@@ -18,9 +25,30 @@ export async function createMessageAndSend(rpcRecord: Record<string, boolean>, s
         message += `${key}: ${subgraphRecord[key] ? '✅ Synced' : '❌ Out of Sync'}\n`;
     }
 
+    message += `\n🕒 *Subgraph Response Time*\n`;
+    for (const key in subgraphDelayRecord) {
+        if (subgraphDelayRecord[key] > DELAY_THRESHOLD) {
+            shouldPing = true;
+        }
+        message += `${key}: ${subgraphDelayRecord[key] < DELAY_THRESHOLD ? '✅ OK' : '❌ Degradation'} ${subgraphDelayRecord[key].toFixed(0)} ms\n`;
+    }
+
+    message += `\n📦 *Proxy Subgraph Items*\n`;
+    for (const key in proxySubgraphRecord) {
+        if (proxySubgraphRecord[key] === 0) {
+            shouldPing = true;
+        }
+        message += `${key}: ${proxySubgraphRecord[key] > 0 ? '✅ Not empty array' : '❌ Empty array'}\n`;
+    }
+
     if (shouldPing) {
         message += `\n🚨 *Alert*\nPing @ruby0x`;
     }
+    await sendMessage(message);
+}
+
+export async function sendErrorMessage(method: string, error: string) {
+    const message = `❌ *Error*\nMethod: ${method}\nError: ${error}`;
     await sendMessage(message);
 }
 
