@@ -9,11 +9,14 @@ export class ApplicationStateEntity {
   applicationName!: string;
 
   @Column()
-  status!: string;
+  metric!: string;
+
+  @Column()
+  url!: string;
+
+  @Column()
+  result!: string;
 
   @CreateDateColumn()
   createdAt!: Date;
-
-  @UpdateDateColumn()
-  updatedAt!: Date;
 }

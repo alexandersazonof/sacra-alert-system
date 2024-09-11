@@ -1,5 +1,6 @@
 import { ethers } from 'ethers';
 import logger from '../logger';
+import { sendErrorMessage } from './telegram.service';
 
 const DIFFERENCE_THRESHOLD = 15;
 
@@ -19,6 +20,7 @@ export async function getLatestBlock(rpc: string) {
     const provider = new ethers.JsonRpcProvider(rpc)
     return await provider.getBlockNumber();
   } catch (error) {
+    await sendErrorMessage('getLatestBlock', error);
     logger.error(`Error fetching the latest block: ${error}`);
     return 0;
   }
