@@ -1,6 +1,10 @@
 import axios from 'axios';
 import logger from '../logger';
+import * as dotenv from 'dotenv';
 
+dotenv.config();
+
+const PING_USERS = (process.env.PING_USERS || '').split(',');
 const DELAY_THRESHOLD = 1000;
 
 export async function createMessageAndSend(
@@ -41,8 +45,8 @@ export async function createMessageAndSend(
         message += `${key}: ${proxySubgraphRecord[key] > 0 ? '✅ Not empty array' : '❌ Empty array'}\n`;
     }
 
-    if (shouldPing) {
-        message += `\n🚨 *Alert*\nPing @ruby0x`;
+    if (shouldPing && PING_USERS.length > 0) {
+        message += `\n🚨 *Alert*\nPing ${PING_USERS.join(' ')}`;
     }
     await sendMessage(message);
 }
