@@ -3,16 +3,15 @@ import logger from '../logger';
 import { getLatestBlock } from './rpc.service';
 import { sendErrorMessage } from './telegram.service';
 
-const DIFFERENCE_THRESHOLD = 15;
 
 export async function compareSubgraphAndRpcByBlock(subgraph: string, rpc: string) {
   try {
     const subgraphBlock = await getSubgraphBlock(subgraph);
     const rpcBlock = await getLatestBlock(rpc);
-    return Math.abs(subgraphBlock - rpcBlock) < DIFFERENCE_THRESHOLD;
+    return Math.abs(subgraphBlock - rpcBlock);
   } catch (error) {
     logger.error(`Error comparing the subgraph and RPCs: ${error}`);
-    return false;
+    return -1;
   }
 }
 

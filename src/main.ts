@@ -4,7 +4,7 @@ import { isEqualsRpcState } from './service/rpc.service';
 import { compareSubgraphAndRpcByBlock, getProxyPawnshopItems, getResponseTime } from './service/subgraph.service';
 
 import * as dotenv from 'dotenv';
-import { createMessageAndSend, sendMessage } from './service/telegram.service';
+import { createMessageAndSend, sendErrorMessage, sendMessage } from './service/telegram.service';
 import { ApplicationStateEntity } from './entity/application-state.entity';
 import { saveApplicationState } from './service/application-state.service';
 
@@ -26,8 +26,19 @@ const PROXY_SUBGRAPH_NAME = (process.env.PROXY_SUBGRAPH_NAME || '').split(',');
 
 const JOB_INTERVAL = process.env.JOB_INTERVAL || '*/1 * * * *';
 
+let lastLogTime = new Date();
+
 const job = schedule.scheduleJob(JOB_INTERVAL, async function(){
   try {
+    let healthCheck = false;
+    const currentTime = new Date();
+    const minutesSinceLastLog = Math.floor((currentTime.getTime() - lastLogTime.getTime()) / 1000 / 60);
+    if (minutesSinceLastLog >= 60) {
+      logger.info('Hourly log message');
+      healthCheck = true;
+      lastLogTime = currentTime;
+    }
+
     logger.info('Run job');
     let rpcRecord: Record<string, boolean> = {};
     for (let i = 0; i < RPC_TARGET.length; i++) {
@@ -35,7 +46,7 @@ const job = schedule.scheduleJob(JOB_INTERVAL, async function(){
       await saveApplicationState(createApplicationState(RPC_NAME[i], 'RPC state', RPC_TARGET[i], rpcRecord[RPC_NAME[i]] ? 'OK' : 'ERROR'));
     }
 
-    let subgraphRecord: Record<string, boolean> = {};
+    let subgraphRecord: Record<string, number> = {};
     let subgraphDelayRecord: Record<string, number> = {};
     for (let i = 0; i < SUBGRAPH_TARGET.length; i++) {
       subgraphRecord[SUBGRAPH_NAME[i]] = await compareSubgraphAndRpcByBlock(SUBGRAPH_TARGET[i], SUBGRAPH_SOURCE[i]);
@@ -50,9 +61,9 @@ const job = schedule.scheduleJob(JOB_INTERVAL, async function(){
       await saveApplicationState(createApplicationState(PROXY_SUBGRAPH_NAME[i], 'Proxy subgraph', PROXY_SUBGRAPH_TARGET[i], proxySubgraphRecord[PROXY_SUBGRAPH_NAME[i]].toString()));
     }
 
-    await createMessageAndSend(rpcRecord, subgraphRecord, subgraphDelayRecord, proxySubgraphRecord);
+    await createMessageAndSend(rpcRecord, subgraphRecord, subgraphDelayRecord, proxySubgraphRecord, healthCheck);
   } catch (error) {
-    await sendMessage(`Error running ${error}`);
+    await sendErrorMessage('main', `Error running ${error}`);
     logger.error(`Error running ${error}`);
   }
 });

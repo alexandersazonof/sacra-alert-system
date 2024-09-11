@@ -5,13 +5,15 @@ import * as dotenv from 'dotenv';
 dotenv.config();
 
 const PING_USERS = (process.env.PING_USERS || '').split(',');
-const DELAY_THRESHOLD = 1000;
+const DELAY_THRESHOLD = 500;
+const DIFFERENCE_THRESHOLD = 15;
 
 export async function createMessageAndSend(
   rpcRecord: Record<string, boolean>,
-  subgraphRecord: Record<string, boolean>,
+  subgraphRecord: Record<string, number>,
   subgraphDelayRecord: Record<string, number>,
-  proxySubgraphRecord: Record<string, number>
+  proxySubgraphRecord: Record<string, number>,
+  isHealthCheck: boolean = false
   ) {
     let shouldPing = false;
     let message = `🔧 *RPC Status*\n`;
@@ -21,12 +23,12 @@ export async function createMessageAndSend(
         }
         message += `${key}: ${rpcRecord[key] ? '✅ Operational' : '❌ Down'}\n`;
     }
-    message += `\n📊 *Subgraph Status*\n`;
+    message += `\n📊 *Subgraph Different blocks*\n`;
     for (const key in subgraphRecord) {
-        if (!subgraphRecord[key]) {
+        if (subgraphRecord[key] > DIFFERENCE_THRESHOLD || subgraphRecord[key] === -1) {
             shouldPing = true;
         }
-        message += `${key}: ${subgraphRecord[key] ? '✅ Synced' : '❌ Out of Sync'}\n`;
+        message += `${key}: ${subgraphRecord[key] > DIFFERENCE_THRESHOLD || subgraphRecord[key] === -1  ? '❌ ' : `✅`} ${subgraphRecord[key]} blocks\n`;
     }
 
     message += `\n🕒 *Subgraph Response Time*\n`;
@@ -48,11 +50,16 @@ export async function createMessageAndSend(
     if (shouldPing && PING_USERS.length > 0) {
         message += `\n🚨 *Alert*\nPing ${PING_USERS.join(' ')}`;
     }
-    await sendMessage(message);
+    if (shouldPing || isHealthCheck) {
+      await sendMessage(message);
+    }
 }
 
 export async function sendErrorMessage(method: string, error: string) {
-    const message = `❌ *Error*\nMethod: ${method}\nError: ${error}`;
+    let message = `❌ *Error*\nMethod: ${method}\nError: ${error}`;
+    if (PING_USERS.length > 0) {
+      message += `\n🚨 *Alert*\nPing ${PING_USERS.join(' ')}`;
+    }
     await sendMessage(message);
 }
 
