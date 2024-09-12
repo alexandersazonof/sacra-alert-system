@@ -44,7 +44,15 @@ export async function createMessageAndSend(
         if (subgraphDelayRecord[key] > DELAY_THRESHOLD) {
             shouldPing = true;
         }
-        message += `${key}: ${subgraphDelayRecord[key] < DELAY_THRESHOLD ? '✅ OK' : '❌ Degradation'} ${subgraphDelayRecord[key].toFixed(0)} ms\n`;
+        let additionalMessage = '';
+        if (subgraphDelayRecord[key] === -1) {
+          additionalMessage = `❌ Indexing error`;
+        } else if (subgraphDelayRecord[key] > DELAY_THRESHOLD) {
+          additionalMessage = `❌ ${subgraphDelayRecord[key].toFixed(0)} ms`;
+        } else {
+          additionalMessage = `✅ ${subgraphDelayRecord[key].toFixed(0)} ms`;
+        }
+        message += `${key}: ${additionalMessage} \n`;
     }
 
     message += `\n📦 *Proxy Subgraph Items*\n`;
