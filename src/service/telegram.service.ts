@@ -28,7 +28,15 @@ export async function createMessageAndSend(
         if (subgraphRecord[key] > DIFFERENCE_THRESHOLD || subgraphRecord[key] === -1) {
             shouldPing = true;
         }
-        message += `${key}: ${subgraphRecord[key] > DIFFERENCE_THRESHOLD || subgraphRecord[key] === -1  ? '❌ ' : `✅`} ${subgraphRecord[key]} blocks\n`;
+        let additionalMessage = '';
+        if (subgraphRecord[key] > DIFFERENCE_THRESHOLD) {
+          additionalMessage = `❌ Difference ${subgraphRecord[key]} blocks`;
+        } else if (subgraphRecord[key] === -1) {
+          additionalMessage = `❌ Indexing error`;
+        } else {
+          additionalMessage = `✅ ${subgraphRecord[key]} blocks`;
+        }
+        message += `${key}: ${additionalMessage}\n`;
     }
 
     message += `\n🕒 *Subgraph Response Time*\n`;

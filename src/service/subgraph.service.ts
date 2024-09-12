@@ -7,6 +7,9 @@ import { sendErrorMessage } from './telegram.service';
 export async function compareSubgraphAndRpcByBlock(subgraph: string, rpc: string) {
   try {
     const subgraphBlock = await getSubgraphBlock(subgraph);
+    if (subgraphBlock === 0) {
+      return -1;
+    }
     const rpcBlock = await getLatestBlock(rpc);
     return Math.abs(subgraphBlock - rpcBlock);
   } catch (error) {
@@ -18,7 +21,10 @@ export async function compareSubgraphAndRpcByBlock(subgraph: string, rpc: string
 export async function getResponseTime(url: string): Promise<number> {
   const start = performance.now();
   try {
-    await getSubgraphBlock(url);
+    const block = await getSubgraphBlock(url);
+    if (block === 0) {
+      return -1;
+    }
   } catch (e) {
     logger.error(`Error fetching the response time: ${e}`);
     return -1;
@@ -48,6 +54,10 @@ async function getSubgraphBlock(subgraph: string): Promise<number> {
         'Content-Type': 'application/json'
       }
     });
+
+    if (response.data.errors) {
+      return 0;
+    }
 
     return response.data.data._meta.block.number;
   } catch (error) {
