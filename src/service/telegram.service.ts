@@ -5,7 +5,7 @@ import * as dotenv from 'dotenv';
 dotenv.config();
 
 const PING_USERS = (process.env.PING_USERS || '').split(',');
-const DELAY_THRESHOLD = 500;
+const DELAY_THRESHOLD = 10000;
 const DIFFERENCE_THRESHOLD = 15;
 
 export async function createMessageAndSend(
